@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Descripción">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etDescripcion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnGrabarAudio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Grabar Audio" />
+
+        <Button
+            android:id="@+id/btnDetenerAudio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Detener Grabación"
+            android:enabled="false"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnTomarFoto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tomar Foto" />
+
+        <ImageView
+            android:id="@+id/ivFoto"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginTop="8dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Imagen tomada" />
+
+        <Button
+            android:id="@+id/btnObtenerUbicacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Obtener Ubicación" />
+
+        <TextView
+            android:id="@+id/tvUbicacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lat: --, Lng: --"
+            android:textAlignment="center"
+            android:textSize="16sp"
+            android:layout_marginBottom="24dp"
+            android:padding="8dp" />
+
+        <Button
+            android:id="@+id/btnSubirDatos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Subir Datos a API" />
+
+        <Button
+            android:id="@+id/btnVerAudios"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ver Audios" />
+
+    </LinearLayout>
+</ScrollView>
