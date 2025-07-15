@@ -1,22 +1,25 @@
 <?php
-require_once 'config.php';
+require_once 'config.php';   // fuera de la función, así $pdo queda global
 
-// Verifica si el token viene en el encabezado
-$headers = apache_request_headers();
-if (!isset($headers['API-Key'])) {
-    http_response_code(401);
-    echo json_encode(["issuccess" => false, "message" => "API Key requerida"]);
-    exit;
+function validarApiKey(): bool
+{
+    global $pdo;             // usa el $pdo global
+
+    $headers = function_exists('apache_request_headers')
+        ? apache_request_headers()
+        : $_SERVER;
+
+    $apiKey = $headers['API-Key']
+        ?? $headers['Http-Api-Key']
+        ?? $headers['HTTP_API_KEY']
+        ?? null;
+
+    if (!$apiKey) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare('SELECT 1 FROM api_tokens WHERE token = ?');
+    $stmt->execute([$apiKey]);
+
+    return $stmt->fetchColumn() !== false;
 }
-
-$apiKey = $headers['API-Key'];
-
-$stmt = $pdo->prepare("SELECT * FROM api_tokens WHERE token = ?");
-$stmt->execute([$apiKey]);
-
-if ($stmt->rowCount() === 0) {
-    http_response_code(403);
-    echo json_encode(["issuccess" => false, "message" => "API Key inválida"]);
-    exit;
-}
-?>

@@ -1,51 +1,53 @@
 <?php
-header("Content-Type: application/json; charset=utf-8");
+ini_set('display_errors', 0);
+error_reporting(0);
+header('Content-Type: application/json; charset=utf-8');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Método no permitido, use POST']);
+    exit;
+}
 require_once 'config.php';
-require_once 'validar_token.php'; // Validar API Key
+require_once 'validar_token.php';
+if (!validarApiKey()) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'API-Key inválida o no provista']);
+    exit;
+}
 
-// Obtener datos JSON del cuerpo
-$data = json_decode(file_get_contents("php://input"));
 
+
+$input = json_decode(file_get_contents('php://input'), true);
 if (
-    isset($data->descripcion) &&
-    isset($data->audio) &&
-    isset($data->imagen) &&
-    isset($data->lat) &&
-    isset($data->lng)
+    empty($input['descripcion']) ||
+    empty($input['audio'])       ||
+    empty($input['imagen'])      ||
+    !isset($input['lat'])        ||
+    !isset($input['lng'])
 ) {
-    try {
-        $sql = "INSERT INTO audios (descripcion, audio, imagen, lat, lng) VALUES (:descripcion, :audio, :imagen, :lat, :lng)";
-        $stmt = $pdo->prepare($sql);
-
-        // Bind params
-        $stmt->bindParam(':descripcion', $data->descripcion, PDO::PARAM_STR);
-        $stmt->bindParam(':audio', $data->audio, PDO::PARAM_STR);
-        $stmt->bindParam(':imagen', $data->imagen, PDO::PARAM_STR);
-        $stmt->bindParam(':lat', $data->lat);
-        $stmt->bindParam(':lng', $data->lng);
-
-        if ($stmt->execute()) {
-            echo json_encode([
-                "success" => true,
-                "message" => "Registro guardado exitosamente"
-            ]);
-        } else {
-            echo json_encode([
-                "success" => false,
-                "message" => "No se pudo guardar el registro"
-            ]);
-        }
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode([
-            "success" => false,
-            "message" => "Error en la base de datos: " . $e->getMessage()
-        ]);
-    }
-} else {
     http_response_code(400);
-    echo json_encode([
-        "success" => false,
-        "message" => "Faltan campos requeridos"
-    ]);
+    echo json_encode(['success' => false, 'message' => 'Faltan campos requeridos']);
+    exit;
+}
+
+try {
+    $sql = 'INSERT INTO audios (descripcion, audio, imagen, lat, lng) VALUES (:descripcion, :audio, :imagen, :lat, :lng)';
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(':descripcion', $input['descripcion'], PDO::PARAM_STR);
+    $stmt->bindValue(':audio',       $input['audio'],       PDO::PARAM_STR);
+    $stmt->bindValue(':imagen',      $input['imagen'],      PDO::PARAM_STR);
+    $stmt->bindValue(':lat',         $input['lat']);
+    $stmt->bindValue(':lng',         $input['lng']);
+
+    if ($stmt->execute()) {
+        http_response_code(201);
+        echo json_encode(['success' => true, 'message' => 'Registro guardado exitosamente', 'id' => $pdo->lastInsertId()]);
+    } else {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'No se pudo guardar el registro']);
+    }
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Error en la base de datos: ' . $e->getMessage()]);
 }
