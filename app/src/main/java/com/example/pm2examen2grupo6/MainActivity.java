@@ -6,11 +6,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.location.Location;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
@@ -22,9 +22,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.CancellationTokenSource;
+import com.google.android.material.textfield.TextInputEditText;
 
 import org.json.JSONObject;
 
@@ -43,15 +45,18 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 201;
-    private static final int REQUEST_LOCATION_PERMISSION = 202;
-    private static final int REQUEST_STORAGE_PERMISSION = 203;
-    private static final int REQUEST_CAMERA_PERMISSION = 204;
+    // ① URL base apuntando al host de tu PC desde el emulador
+    private static final String BASE_URL = "http://10.0.2.2/PM2E1Grupo6/";
 
-    private static final int REQUEST_CODE_CAMERA = 101;
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 201;
+    private static final int REQUEST_LOCATION_PERMISSION      = 202;
+    private static final int REQUEST_STORAGE_PERMISSION       = 203;
+    private static final int REQUEST_CAMERA_PERMISSION        = 204;
+    private static final int REQUEST_CODE_CAMERA              = 101;
 
     private TextInputEditText etDescripcion;
-    private Button btnGrabarAudio, btnDetenerAudio, btnTomarFoto, btnObtenerUbicacion, btnSubirDatos, btnVerAudios;
+    private Button btnGrabarAudio, btnDetenerAudio, btnTomarFoto,
+            btnObtenerUbicacion, btnSubirDatos, btnVerAudios;
     private TextView tvUbicacion;
     private ImageView ivFoto;
 
@@ -73,19 +78,19 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Referencias UI
-        etDescripcion = findViewById(R.id.etDescripcion);
-        btnGrabarAudio = findViewById(R.id.btnGrabarAudio);
-        btnDetenerAudio = findViewById(R.id.btnDetenerAudio);
-        btnTomarFoto = findViewById(R.id.btnTomarFoto);
+        etDescripcion       = findViewById(R.id.etDescripcion);
+        btnGrabarAudio      = findViewById(R.id.btnGrabarAudio);
+        btnDetenerAudio     = findViewById(R.id.btnDetenerAudio);
+        btnTomarFoto        = findViewById(R.id.btnTomarFoto);
         btnObtenerUbicacion = findViewById(R.id.btnObtenerUbicacion);
-        btnSubirDatos = findViewById(R.id.btnSubirDatos);
-        btnVerAudios = findViewById(R.id.btnVerAudios);
-        tvUbicacion = findViewById(R.id.tvUbicacion);
-        ivFoto = findViewById(R.id.ivFoto);
+        btnSubirDatos       = findViewById(R.id.btnSubirDatos);
+        btnVerAudios        = findViewById(R.id.btnVerAudios);
+        tvUbicacion         = findViewById(R.id.tvUbicacion);
+        ivFoto              = findViewById(R.id.ivFoto);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        // Listeners con chequeo de permisos individuales
+        // Listeners con chequeo de permisos
         btnGrabarAudio.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -127,22 +132,18 @@ public class MainActivity extends AppCompatActivity {
 
         btnSubirDatos.setOnClickListener(v -> subirDatos());
 
-        btnVerAudios.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, ListaAudiosActivity.class);
-            startActivity(intent);
-        });
+        btnVerAudios.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, ListaAudiosActivity.class))
+        );
 
-        btnDetenerAudio.setEnabled(false);  // Al iniciar app, detener audio no habilitado
+        btnDetenerAudio.setEnabled(false);
     }
 
-    // Manejo permisos resultado
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             switch (requestCode) {
                 case REQUEST_RECORD_AUDIO_PERMISSION:
@@ -153,9 +154,6 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case REQUEST_LOCATION_PERMISSION:
                     obtenerUbicacion();
-                    break;
-                case REQUEST_STORAGE_PERMISSION:
-                    // No hacemos nada extra aquí, el permiso es para almacenamiento.
                     break;
             }
         } else {
@@ -177,10 +175,11 @@ public class MainActivity extends AppCompatActivity {
             btnGrabarAudio.setEnabled(false);
             btnDetenerAudio.setEnabled(true);
             Toast.makeText(this, "Grabando audio...", Toast.LENGTH_SHORT).show();
-
         } catch (IOException e) {
             e.printStackTrace();
-            Toast.makeText(this, "Error al iniciar grabación: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this,
+                    "Error al iniciar grabación: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
         }
     }
 
@@ -189,26 +188,22 @@ public class MainActivity extends AppCompatActivity {
             recorder.stop();
             recorder.release();
             recorder = null;
-
             btnGrabarAudio.setEnabled(true);
             btnDetenerAudio.setEnabled(false);
             Toast.makeText(this, "Grabación detenida", Toast.LENGTH_SHORT).show();
-
             base64Audio = audioFileToBase64(audioFilePath);
-
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this, "Error al detener grabación: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this,
+                    "Error al detener grabación: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
         }
     }
 
     private String audioFileToBase64(String path) {
-        try {
-            File file = new File(path);
-            FileInputStream fis = new FileInputStream(file);
-            byte[] bytes = new byte[(int) file.length()];
+        try (FileInputStream fis = new FileInputStream(new File(path))) {
+            byte[] bytes = new byte[fis.available()];
             fis.read(bytes);
-            fis.close();
             return Base64.encodeToString(bytes, Base64.NO_WRAP);
         } catch (IOException e) {
             e.printStackTrace();
@@ -218,9 +213,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void tomarFoto() {
         ContentValues values = new ContentValues();
-        values.put(MediaStore.Images.Media.TITLE, "Nueva Foto");
+        values.put(MediaStore.Images.Media.TITLE,       "Nueva Foto");
         values.put(MediaStore.Images.Media.DESCRIPTION, "Desde la cámara");
-        photoUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        photoUri = getContentResolver()
+                .insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 
         Intent intentCamara = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         intentCamara.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
@@ -228,16 +224,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode,
+                                    int resultCode,
+                                    Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_CODE_CAMERA && resultCode == RESULT_OK) {
+        if (requestCode == REQUEST_CODE_CAMERA && resultCode == RESULT_OK) {
             try {
-                fotoBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), photoUri);
+                fotoBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), photoUri);
                 ivFoto.setImageBitmap(fotoBitmap);
                 base64Foto = bitmapToBase64(fotoBitmap);
             } catch (IOException e) {
                 e.printStackTrace();
-                Toast.makeText(this, "Error al obtener foto: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this,
+                        "Error al obtener foto: " + e.getMessage(),
+                        Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -245,51 +245,54 @@ public class MainActivity extends AppCompatActivity {
     private String bitmapToBase64(Bitmap bitmap) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
-        byte[] imageBytes = baos.toByteArray();
-        return Base64.encodeToString(imageBytes, Base64.NO_WRAP);
+        return Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP);
     }
 
+    @SuppressLint("MissingPermission")
     private void obtenerUbicacion() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-            fusedLocationClient.getLastLocation()
-                    .addOnSuccessListener(location -> {
-                        if (location != null) {
-                            currentLat = location.getLatitude();
-                            currentLng = location.getLongitude();
-                            tvUbicacion.setText("Lat: " + currentLat + ", Lng: " + currentLng);
-                        } else {
-                            Toast.makeText(MainActivity.this, "No se pudo obtener la ubicación", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        } else {
-            Toast.makeText(this, "Permisos de ubicación no concedidos", Toast.LENGTH_SHORT).show();
-        }
+        // Usamos getCurrentLocation para asegurar fix incluso sin cache previo
+        CancellationTokenSource cts = new CancellationTokenSource();
+        fusedLocationClient.getCurrentLocation(
+                LocationRequest.PRIORITY_HIGH_ACCURACY,
+                cts.getToken()
+        ).addOnSuccessListener(location -> {
+            if (location != null) {
+                currentLat = location.getLatitude();
+                currentLng = location.getLongitude();
+                tvUbicacion.setText("Lat: " + currentLat + ", Lng: " + currentLng);
+            } else {
+                Toast.makeText(this,
+                        "No se pudo obtener la ubicación",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }).addOnFailureListener(e -> Toast.makeText(this,
+                "Error al obtener ubicación: " + e.getMessage(),
+                Toast.LENGTH_LONG).show()
+        );
     }
 
     private void subirDatos() {
         String descripcion = etDescripcion.getText().toString().trim();
-
-        if(descripcion.isEmpty()) {
+        if (descripcion.isEmpty()) {
             Toast.makeText(this, "Ingresa una descripción", Toast.LENGTH_SHORT).show();
             return;
         }
-        if(base64Audio.isEmpty()) {
+        if (base64Audio.isEmpty()) {
             Toast.makeText(this, "Graba un audio antes de subir", Toast.LENGTH_SHORT).show();
             return;
         }
-        if(base64Foto.isEmpty()) {
+        if (base64Foto.isEmpty()) {
             Toast.makeText(this, "Toma una foto antes de subir", Toast.LENGTH_SHORT).show();
             return;
         }
-        if(currentLat == 0.0 && currentLng == 0.0) {
-            Toast.makeText(this, "Obtén la ubicación antes de subir", Toast.LENGTH_SHORT).show();
+        if (currentLat == 0.0 && currentLng == 0.0) {
+            Toast.makeText(this,
+                    "Obtén la ubicación antes de subir",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
         OkHttpClient client = new OkHttpClient();
-
         try {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("descripcion", descripcion);
@@ -298,12 +301,13 @@ public class MainActivity extends AppCompatActivity {
             jsonObject.put("lat", currentLat);
             jsonObject.put("lng", currentLng);
 
-            String jsonString = jsonObject.toString();
-
-            RequestBody body = RequestBody.create(jsonString, MediaType.get("application/json; charset=utf-8"));
+            RequestBody body = RequestBody.create(
+                    jsonObject.toString(),
+                    MediaType.get("application/json; charset=utf-8")
+            );
 
             Request request = new Request.Builder()
-                    .url("http://192.168.33.202/PM2E1Grupo6/create.php")
+                    .url(BASE_URL + "create.php")
                     .addHeader("API-Key", "ABC123TOKEN")
                     .post(body)
                     .build();
@@ -312,22 +316,25 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onFailure(Call call, IOException e) {
                     runOnUiThread(() ->
-                            Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(MainActivity.this,
+                                    "Error: " + e.getMessage(),
+                                    Toast.LENGTH_SHORT).show()
                     );
                 }
-
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
-                    final String respuesta = response.body().string();
+                    String respuesta = response.body().string();
                     runOnUiThread(() ->
-                            Toast.makeText(MainActivity.this, "Respuesta: " + respuesta, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(MainActivity.this,
+                                    "Respuesta: " + respuesta,
+                                    Toast.LENGTH_SHORT).show()
                     );
                 }
             });
-
         } catch (Exception e) {
-            Toast.makeText(this, "Error al crear JSON: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this,
+                    "Error al crear JSON: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
         }
     }
 }
-

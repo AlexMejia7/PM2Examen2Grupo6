@@ -6,8 +6,17 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <!-- Campo de búsqueda -->
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/svSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:queryHint="Buscar descripción…"/>
+
+    <!-- Lista de audios ocupa el resto de la pantalla -->
     <ListView
         android:id="@+id/listViewAudios"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
 </LinearLayout>

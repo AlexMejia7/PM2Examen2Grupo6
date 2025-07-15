@@ -14,7 +14,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Descripción">
+            android:hint="Nombre">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etDescripcion"
@@ -77,7 +77,7 @@
             android:id="@+id/btnVerAudios"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ver Audios" />
+            android:text="Ver Lista de Contactos" />
 
     </LinearLayout>
 </ScrollView>

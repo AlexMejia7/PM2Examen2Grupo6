@@ -8,30 +8,70 @@
     android:background="#EEEEEE"
     android:layout_marginBottom="8dp">
 
+    <!-- Descripción -->
     <TextView
         android:id="@+id/tvDescripcion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:textStyle="bold"
         android:textSize="16sp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:paddingBottom="4dp"/>
 
+    <!-- Imagen -->
     <ImageView
         android:id="@+id/ivImagen"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:scaleType="centerCrop"/>
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:layout_marginBottom="4dp"/>
 
+    <!-- Lat/Lng -->
     <TextView
         android:id="@+id/tvLatLng"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#555"/>
+        android:textColor="#555"
+        android:paddingBottom="8dp"/>
 
-    <Button
-        android:id="@+id/btnEliminar"
+    <!-- Fila de botones: Play, Editar, Mapa, Eliminar -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Eliminar"
-        android:background="@android:color/holo_red_dark"
-        android:textColor="#FFF"/>
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btnPlay"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="▶"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btnEdit"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✎"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btnMap"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📍"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btnEliminar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Eliminar"
+            android:background="@android:color/holo_red_dark"
+            android:textColor="#FFF"/>
+
+    </LinearLayout>
 </LinearLayout>
